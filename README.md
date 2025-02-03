@@ -1,55 +1,60 @@
-import pandas as pd
+import json
 
-#Criando um DataFrame inicial
+def carregar_clientes(caminho_arquivo):
+    try:
+        with open(caminho_arquivo, 'r', encoding='utf-8') as arquivo:
+            return json.load(arquivo)
+    except FileNotFoundError:
+        print('arquivo nao encontrado')
+        return [] 
+    except json.JSONDecodeError as e:
+        print(f'Erro ao ler o arquivo JSON: {e}')
+        return []
+def salvar_clientes(caminho_arquivo, clientes):
+    with open(caminho_arquivo, 'w', encoding='utf-8') as arquivo:
+        json.dump(clientes, arquivo, indent=2)
 
-df = pd.DataFrame(columns=['codigo', 'produto', 'quantidade', 'reservado', 'saldo'])
-
-def adicionar_estoque(df,codigo, produto, quantidade, reservado, saldo):
-    produtos = pd.DataFrame({                                                                                                                                           
-        'codigo': [codigo],
-        'produto': [produto],
-        'quantidade': [quantidade],
-        'reservado': [reservado],
-        'saldo': [saldo],
-    })
-    df = pd.concat([df, pd.DataFrame(produtos)], ignore_index=True)
-    return df
-df = adicionar_estoque(df, 1, 'produtoA', 100, 0, 100)
-df = adicionar_estoque(df, 2, 'produtoB', 50, 0, 50)
-
-def remover_estoque(df):
+# Filtrar clientes        
+def clientes_situacao(situacao_ativo, situacao_inativo, clientes):
     while True:
-        remover_saldo = input('deseja retirar unidade do estoque: [S]im, [N]ao')
-        if remover_saldo.upper() == 'S':
-            codigo_produto = int(input('digite o codigo do produto:'))
-            try:
-                quantidade = float(input('qual quantidade deseja retirar:'))
-                #encontrar produto pelo codigo.
-                produto = df[df['codigo'] == codigo_produto] 
-                
-                if produto.empty:
-                    print(f'produto com codigo {codigo_produto} nao encontrado')
-                else:                                                                                                       
-                    if quantidade <= produto['saldo'].values[0]:
-                        df.loc[df['codigo'] == codigo_produto, 'saldo'] -= quantidade
-                        print(f'foram retirado {quantidade} unidades')
-                    else:
-                        print(f'quantidade insuficiente em estoque para retirar')
-            except ValueError:
-                print("Valor invalido.Digite um numero")
-        elif remover_saldo.upper() == 'N':
+        situacoes = input('Deseja filtrar os clientes por situacao: [A]tivos, [I]nativos, [V]oltar:')
+        if situacoes.upper() == 'A':
+            for item in clientes:
+                if item['situacao'] == situacao_ativo:
+                    print(json.dumps(item, indent=2))
+        elif situacoes.upper() == 'I':
+                    for item in clientes:
+                        if item['situacao'].strip().lower() == situacao_inativo.lower():
+                            print(json.dumps(item, indent=2))
+        elif situacoes.upper() == 'V':
             break
         else:
-            print('opcao invalida:Digite S ou N')
-
-def listar_estoque(df):
+            print('Digite valores validos: [A]tivos, [I]nativos:')
+# Listar clientes 
+def listar_clientes(clientes):
     while True:
-        valores = input("Deseja listar o estoque: [Sim, [N]ao")
+        valores = input('Deseja listar os clientes: [S]im, [N]ao')
         if valores.upper() == 'S':
-            print(df.to_string(index=False))
+            print(json.dumps(clientes, indent=2))
         elif valores.upper() == 'N':
             break
         else:
-            print('Digite valores validos')
-remover_estoque(df)
-listar_estoque(df)
+            print('Digite valores validos: [S]im ou [N]ao')
+# Menu de iteracao 
+def main():
+    while True:
+        print('Selecione uma opcao:')
+        print('F - Filtrar clientes por situacao')
+        print('L - Listar clientes')
+        print('S - sair')
+        opcoes = input('Escolha uma opcao:')
+        if opcoes.upper() == 'F':
+            clientes_situacao('ativo', 'inativo', carregar_clientes('clientes.json'))
+        elif opcoes.upper() == 'L':
+            listar_clientes(carregar_clientes('clientes.json'))
+        elif opcoes.upper() == 'S':
+            break
+        else:
+            print('Digite alguma lera das opcoes:')
+if __name__ == "__main__":
+    main()
